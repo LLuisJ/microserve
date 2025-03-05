@@ -77,7 +77,6 @@ class MicroServeRouter:
 
     def stop(self, _, __):
         self.server.server_close()
-        sys.exit(0)
 
 class MicroServeContext:
 
