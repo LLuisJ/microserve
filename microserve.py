@@ -2,7 +2,6 @@ from enum import Enum
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import signal
-import sys
 
 
 class MicroServeError(Enum):
