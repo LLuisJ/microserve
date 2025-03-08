@@ -15,6 +15,7 @@ def main():
     router.delete("/test", delete_handler)
     router.get("/download", download_handler)
     router.get("/html", html_handler)
+    router.get("/xml", xml_handler)
     try:
         router.run()
     except OSError:
@@ -51,6 +52,10 @@ def download_handler(ctx):
 
 def html_handler(ctx):
     ctx.html("test.html")
+
+
+def xml_handler(ctx):
+    ctx.xml("<test>test</test>")
 
 
 if __name__ == "__main__":

@@ -129,7 +129,7 @@ class MicroServeContext:
 
     def xml(self, data):
         self.response_headers["Content-Type"] = "text/xml"
-        self.response_headers["Content-Length"] = len(self.response_data)
+        self.response_headers["Content-Length"] = len(data)
         self.response_data = data
 
     def file(self, path):
