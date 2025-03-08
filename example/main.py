@@ -7,35 +7,37 @@ from microserve import MicroServeRouter
 
 def main():
     router = MicroServeRouter()
-    router.get("/", get_handler)
-    router.get("/get", get_handler)
-    router.post("/post", post_handler)
-    router.post("/post/", post_trail_handler)
-    router.get("/user/:name", var_handler)
-    router.get("/user/:name/add", var_get_handler)
+    router.get("/test", get_handler)
+    router.post("/test", post_handler)
+    router.head("/test", head_handler)
+    router.put("/test", put_handler)
+    router.patch("/test", patch_handler)
+    router.delete("/test", delete_handler)
     router.run()
 
 
 def get_handler(ctx):
-    ctx.return_code = 201
-    ctx.json({"hello": "world"})
+    ctx.json({"method": "get"})
 
 
 def post_handler(ctx):
-    ctx.return_code = 202
-    ctx.json('{"hello": "world"}')
+    ctx.json({"method": "post"})
 
 
-def post_trail_handler(ctx):
-    ctx.json({"post": "trail"})
+def head_handler(ctx):
+    ctx.json({"method": "head"})
 
 
-def var_handler(ctx):
-    ctx.json({"name": ctx.get_path_variable("name")})
+def put_handler(ctx):
+    ctx.json({"method": "put"})
 
 
-def var_get_handler(ctx):
-    ctx.json({"name": ctx.get_path_variable("name"), "method": "add"})
+def patch_handler(ctx):
+    ctx.json({"method": "patch"})
+
+
+def delete_handler(ctx):
+    ctx.json({"method": "delete"})
 
 
 if __name__ == "__main__":

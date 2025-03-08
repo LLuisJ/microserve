@@ -37,6 +37,18 @@ class MicroServeRouter:
     def post(self, path, handler):
         self._add_route("POST", path, handler)
 
+    def head(self, path, handler):
+        self._add_route("HEAD", path, handler)
+
+    def put(self, path, handler):
+        self._add_route("PUT", path, handler)
+
+    def patch(self, path, handler):
+        self._add_route("PATCH", path, handler)
+
+    def delete(self, path, handler):
+        self._add_route("DELETE", path, handler)
+
     def _add_route(self, method, path, handler):
         current_node = self.root
         segments = path.split("/")
@@ -125,6 +137,18 @@ def create_micro_serve_handler(router):
 
         def do_POST(self):
             self._match("POST", self.path)
+
+        def do_HEAD(self):
+            self._match("HEAD", self.path)
+
+        def do_PUT(self):
+            self._match("PUT", self.path)
+
+        def do_PATCH(self):
+            self._match("PATCH", self.path)
+
+        def do_DELETE(self):
+            self._match("DELETE", self.path)
 
         def _match(self, method, path):
             error, handler, ctx = router.match(method, path)
