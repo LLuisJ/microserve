@@ -121,6 +121,24 @@ class MicroServeContext:
         self.response_headers["Content-Length"] = len(self.response_data)
         self.response_data = data
 
+    def html(self, file):
+        self.response_headers["Content-Type"] = "text/html"
+        with open(file, "r") as f:
+            self.response_data = f.read()
+            self.response_headers["Content-Length"] = len(self.response_data)
+
+    def xml(self, data):
+        self.response_headers["Content-Type"] = "text/xml"
+        self.response_headers["Content-Length"] = len(self.response_data)
+        self.response_data = data
+
+    def file(self, path):
+        self.response_headers["Content-Type"] = "application/octet-stream"
+        self.response_headers["Content-Disposition"] = f"attachment; filename={path}"
+        with open(path, "rb") as f:
+            self.response_data = f.read()
+            self.response_headers["Content-Length"] = len(self.response_data)
+
     @staticmethod
     def create_context():
         ctx = MicroServeContext()
@@ -164,8 +182,10 @@ def create_micro_serve_handler(router):
             for header, value in ctx.response_headers.items():
                 self.send_header(header, value)
             self.end_headers()
-            if ctx.response_data:
+            if not isinstance(ctx.response_data, bytes):
                 self.wfile.write(ctx.response_data.encode("utf-8"))
+            else:
+                self.wfile.write(ctx.response_data)
 
         def log_message(self, format, *args):
             pass
