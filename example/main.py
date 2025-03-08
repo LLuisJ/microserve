@@ -13,7 +13,10 @@ def main():
     router.put("/test", put_handler)
     router.patch("/test", patch_handler)
     router.delete("/test", delete_handler)
-    router.run()
+    try:
+        router.run()
+    except OSError:
+        pass
 
 
 def get_handler(ctx):
@@ -25,7 +28,7 @@ def post_handler(ctx):
 
 
 def head_handler(ctx):
-    ctx.json({"method": "head"})
+    ctx.return_code = 201
 
 
 def put_handler(ctx):
