@@ -16,10 +16,21 @@ def main():
     router.get("/download", download_handler)
     router.get("/html", html_handler)
     router.get("/xml", xml_handler)
+    router.get("/middleware1", get_handler, middleware1)
+    router.get("/middleware2", get_handler, middleware2)
+    router.get("/middleware1and2", get_handler, middleware1, middleware2)
     try:
         router.run()
     except OSError:
         pass
+
+
+def middleware1(ctx):
+    ctx.abort(400)
+
+
+def middleware2(ctx):
+    print("middleware2")
 
 
 def get_handler(ctx):

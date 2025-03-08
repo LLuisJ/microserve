@@ -8,6 +8,7 @@ class MicroServeError(Enum):
     NONE = 200
     NOT_FOUND = 404
     METHOD_NOT_ALLOWED = 405
+    MIDDLEWARE_ERROR = -1
 
 
 class MicroServeNode:
@@ -15,12 +16,14 @@ class MicroServeNode:
     children = {}
     handlers = {}
     variable_name = ""
+    middlewares = {}
 
     def __init__(self, segment, children, handlers, variable_name):
         self.segment = segment
         self.children = children
         self.handlers = handlers
         self.variable_name = variable_name
+        self.middlewares = {}
 
 
 class MicroServeRouter:
@@ -31,25 +34,34 @@ class MicroServeRouter:
     def __init__(self):
         self.root = MicroServeNode(None, {}, {}, "")
 
-    def get(self, path, handler):
-        self._add_route("GET", path, handler)
+    def get(self, path, handler, *middlewares):
+        self._add_route("GET", path, handler, middlewares)
 
-    def post(self, path, handler):
-        self._add_route("POST", path, handler)
+    def post(self, path, handler, *middlewares):
+        self._add_route("POST", path, handler, middlewares)
 
-    def head(self, path, handler):
-        self._add_route("HEAD", path, handler)
+    def head(self, path, handler, *middlewares):
+        self._add_route("HEAD", path, handler, middlewares)
 
-    def put(self, path, handler):
-        self._add_route("PUT", path, handler)
+    def put(self, path, handler, *middlewares):
+        self._add_route("PUT", path, handler, middlewares)
 
-    def patch(self, path, handler):
-        self._add_route("PATCH", path, handler)
+    def patch(self, path, handler, *middlewares):
+        self._add_route("PATCH", path, handler, middlewares)
 
-    def delete(self, path, handler):
-        self._add_route("DELETE", path, handler)
+    def delete(self, path, handler, *middlewares):
+        self._add_route("DELETE", path, handler, middlewares)
 
-    def _add_route(self, method, path, handler):
+    def options(self, path, handler, *middlewares):
+        self._add_route("OPTIONS", path, handler, middlewares)
+
+    def _add_route(self, method, path, handler, *middlewares):
+        _middleware = []
+        if middlewares[0]:
+            for middleware in middlewares[0]:
+                if not callable(middleware):
+                    raise TypeError("Middleware {} is not callable".format(middleware))
+                _middleware.append(middleware)
         current_node = self.root
         segments = path.split("/")
         for segment in segments:
@@ -65,6 +77,7 @@ class MicroServeRouter:
                     current_node.children[segment] = MicroServeNode(segment, {}, {}, "")
             current_node = current_node.children[segment]
         current_node.handlers[method] = handler
+        current_node.middlewares[method] = _middleware
 
     def match(self, method, path):
         current_node = self.root
@@ -81,6 +94,14 @@ class MicroServeRouter:
             current_node = current_node.children[segment]
         if method not in current_node.handlers:
             return MicroServeError.METHOD_NOT_ALLOWED, None, ctx
+        middlewares = current_node.middlewares[method]
+        if middlewares:
+            for middleware in middlewares:
+                if ctx[0].request_aborted:
+                    break
+                middleware(ctx[0])
+        if ctx[0].request_aborted:
+            return MicroServeError.MIDDLEWARE_ERROR, None, ctx
         return MicroServeError.NONE, current_node.handlers[method], ctx
 
     def run(self, host="127.0.0.1", port=8080):
@@ -98,6 +119,7 @@ class MicroServeContext:
     request_headers = {}
     response_headers = {}
     response_data = ""
+    request_aborted = False
 
     def set_headers(self, headers):
         self.request_header = headers
@@ -139,6 +161,10 @@ class MicroServeContext:
             self.response_data = f.read()
             self.response_headers["Content-Length"] = len(self.response_data)
 
+    def abort(self, code):
+        self.return_code = code
+        self.request_aborted = True
+
     @staticmethod
     def create_context():
         ctx = MicroServeContext()
@@ -168,10 +194,16 @@ def create_micro_serve_handler(router):
         def do_DELETE(self):
             self._match("DELETE", self.path)
 
+        def do_OPTIONS(self):
+            self._match("OPTIONS", self.path)
+
         def _match(self, method, path):
             error, handler, ctx = router.match(method, path)
             if error != MicroServeError.NONE:
-                self.send_response(error.value)
+                if error != MicroServeError.MIDDLEWARE_ERROR:
+                    self.send_response(error.value)
+                else:
+                    self.send_response(ctx[0].return_code)
                 self.end_headers()
             else:
                 handler(ctx[0])
