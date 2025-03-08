@@ -48,6 +48,7 @@ def delete_handler(ctx):
 def download_handler(ctx):
     ctx.file("test.txt")
 
+
 def html_handler(ctx):
     ctx.html("test.html")
 
